@@ -8,18 +8,20 @@ const config = {
   databaseURL: process.env.REACT_APP_DATABASE_URL,
   projectId: process.env.REACT_APP_PROJECT_ID,
   storageBucket: process.env.REACT_APP_STORAGE_BUCKET,
-  messagingSenderId: process.env.REACT_APP_MESSAGING_SENDER_ID,
+  messagingSenderId: process.env.REACT_APP_MESSAGING_SENDER_ID
 };
 
 class Firebase {
   constructor() {
     app.initializeApp(config);
 
+    this.emailAuthProvider = app.auth.EmailAuthProvider;
     this.auth = app.auth();
     this.db = app.database();
 
     this.googleProvider = new app.auth.GoogleAuthProvider();
     this.facebookProvider = new app.auth.FacebookAuthProvider();
+    this.twitterProvider = new app.auth.TwitterAuthProvider();
   }
 
   // *** Auth API ***
@@ -36,9 +38,17 @@ class Firebase {
   doSignInWithFacebook = () =>
     this.auth.signInWithPopup(this.facebookProvider);
 
+  doSignInWithTwitter = () =>
+    this.auth.signInWithPopup(this.twitterProvider);
+
   doSignOut = () => this.auth.signOut();
 
   doPasswordReset = email => this.auth.sendPasswordResetEmail(email);
+
+  doSendEmailVerification = () =>
+    this.auth.currentUser.sendEmailVerification({
+      url: process.env.REACT_APP_CONFIRMATION_EMAIL_REDIRECT,
+    });
 
   doPasswordUpdate = password =>
     this.auth.currentUser.updatePassword(password);
@@ -60,10 +70,10 @@ class Firebase {
 
             // merge auth and db user
             authUser = {
-              
               uid: authUser.uid,
               email: authUser.email,
-              roles: dbUser.roles,
+              emailVerified: authUser.emailVerified,
+              providerData: authUser.providerData,
               ...dbUser,
             };
 
